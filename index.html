@@ -1,0 +1,3382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DODO Panda Assistant - Private Session</title>
+    <style>
+        /* [All your existing styles remain the same] */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0f0f0f;
+            --sidebar: #0f0f0f;
+            --surface: #1a1a1a;
+            --surface-hover: #2a2a2a;
+            --border: #2d2d30;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-tertiary: #6b7280;
+            --accent: #0e7c7b;
+            --accent-hover: #14b8a6;
+            --user-bubble: #2d2d30;
+            --bot-bubble: #1a1a1a;
+            --code-bg: #0d0d0d;
+            --input-bg: #1e1e1e;
+            --error: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        [data-theme="light"] {
+            --bg: #fafafa;
+            --sidebar: #f5f5f5;
+            --surface: #ffffff;
+            --surface-hover: #f0f0f0;
+            --border: #e0e0e0;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --accent: #0891b2;
+            --accent-hover: #06b6d4;
+            --user-bubble: #e8e8e8;
+            --bot-bubble: #ffffff;
+            --code-bg: #f5f5f5;
+            --input-bg: #f5f5f5;
+            --error: #dc2626;
+            --success: #059669;
+            --warning: #d97706;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 12px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .privacy-badge {
+            font-size: 10px;
+            background-color: var(--surface);
+            color: var(--success);
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .storage-badge {
+            font-size: 10px;
+            background-color: var(--surface);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-left: 4px;
+            cursor: pointer;
+        }
+
+        .storage-badge:hover {
+            background-color: var(--surface-hover);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .nav-btn {
+            flex: 1;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--surface-hover);
+        }
+
+        .nav-btn.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .new-chat-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .new-chat-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 8px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 8px 8px 32px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+
+        .conversation-item {
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .conversation-item:hover {
+            background-color: var(--surface-hover);
+        }
+
+        .conversation-item.selected {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .conversation-item.pinned::before {
+            content: '📌';
+            font-size: 12px;
+        }
+
+        .conversation-menu {
+            margin-left: auto;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .conversation-item:hover .conversation-menu {
+            opacity: 1;
+        }
+
+        .storage-options {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .storage-btn {
+            flex: 1;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 0;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .storage-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--surface-hover);
+        }
+
+        .storage-btn.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .model-selector {
+            margin-bottom: 8px;
+        }
+
+        .model-selector select {
+            width: 100%;
+            padding: 6px;
+            background-color: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .model-selector select:hover {
+            background-color: var(--surface-hover);
+        }
+
+        .model-selector select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .footer-buttons {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .icon-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--surface-hover);
+        }
+
+        .status {
+            font-size: 11px;
+            margin-top: 8px;
+            color: var(--text-tertiary);
+        }
+
+        .status.online {
+            color: var(--success);
+        }
+
+        .status.warning {
+            color: var(--warning);
+        }
+
+        .status.offline {
+            color: var(--error);
+        }
+
+        .status.retrying {
+            color: var(--warning);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .session-indicator {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            padding-top: 4px;
+            cursor: pointer;
+        }
+
+        .session-indicator:hover {
+            color: var(--text-primary);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg);
+        }
+
+        .header {
+            height: 56px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .model-badge {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            background-color: var(--surface);
+            padding: 4px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .model-badge:hover {
+            background-color: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .header-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--surface-hover);
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+            scroll-behavior: smooth;
+        }
+
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+
+        .message-wrapper {
+            display: flex;
+            padding: 8px 100px;
+        }
+
+        .message-wrapper.user {
+            justify-content: flex-end;
+        }
+
+        .message-wrapper.bot {
+            justify-content: flex-start;
+        }
+
+        .message-container {
+            display: flex;
+            gap: 10px;
+            max-width: 700px;
+        }
+
+        .message-wrapper.user .message-container {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .avatar.user {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .avatar.bot {
+            font-size: 24px;
+            background: transparent;
+        }
+
+        .message-bubble {
+            background-color: var(--bot-bubble);
+            border-radius: 18px;
+            padding: 12px 16px;
+            position: relative;
+        }
+
+        .message-wrapper.user .message-bubble {
+            background-color: var(--user-bubble);
+            border: 1px solid var(--border);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .message-name {
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .message-bubble:hover .message-actions {
+            opacity: 1;
+        }
+
+        .message-action {
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            padding: 4px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .message-action:hover {
+            color: var(--text-primary);
+            background-color: var(--surface-hover);
+        }
+
+        .message-content {
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message-content pre {
+            background-color: var(--code-bg);
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .message-content code {
+            background-color: var(--code-bg);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .message-content h1, .message-content h2, .message-content h3 {
+            color: var(--accent);
+            margin: 8px 0;
+        }
+
+        .message-content a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .message-content a:hover {
+            text-decoration: underline;
+        }
+
+        .message-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 8px 0;
+        }
+
+        .message-content th,
+        .message-content td {
+            border: 1px solid var(--border);
+            padding: 8px;
+            text-align: left;
+        }
+
+        .message-content th {
+            background-color: var(--surface-hover);
+        }
+
+        .message-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .message-time {
+            color: var(--text-tertiary);
+            font-size: 10px;
+        }
+
+        .message-reactions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .reaction-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            padding: 2px 4px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .reaction-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--surface-hover);
+        }
+
+        .reaction-btn.active {
+            color: var(--accent);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background-color: var(--bot-bubble);
+            border-radius: 18px;
+            max-width: 100px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+            30% {
+                transform: translateY(-4px);
+                opacity: 1;
+            }
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 20px;
+        }
+
+        .welcome-panda {
+            font-size: 80px;
+            animation: wave 2s infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg); }
+            75% { transform: rotate(-10deg); }
+        }
+
+        .welcome-title {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .suggestion-btn {
+            background-color: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 200px;
+        }
+
+        .suggestion-btn:hover {
+            background-color: var(--surface-hover);
+            border-color: var(--accent);
+        }
+
+        /* Error Message */
+        .error-message {
+            background-color: var(--error);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin: 8px 100px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-message button {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .error-message button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 12px 20px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .input-container {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .message-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            max-height: 100px;
+            font-family: inherit;
+        }
+
+        .send-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 17px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background-color: var(--accent-hover);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stop-btn {
+            background-color: var(--error);
+            color: white;
+            border: none;
+            border-radius: 17px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .stop-btn:hover {
+            background-color: #b91c1c;
+        }
+
+        .input-hint {
+            color: var(--text-tertiary);
+            font-size: 11px;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* Code Block */
+        .code-block {
+            background-color: var(--code-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin: 8px 0;
+        }
+
+        .code-header {
+            background-color: var(--surface);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            border-bottom: 1px solid var(--border);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .code-language {
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .code-copy {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .code-copy:hover {
+            color: var(--text-primary);
+            background-color: var(--surface-hover);
+        }
+
+        .code-content {
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--surface);
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 400px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            margin-bottom: 16px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal-btn.primary {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .modal-btn.secondary {
+            background-color: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .modal-btn.secondary:hover {
+            background-color: var(--surface-hover);
+        }
+
+        /* Settings */
+        .settings-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .settings-tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .settings-tab.active {
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .settings-panel {
+            display: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .settings-item {
+            margin-bottom: 16px;
+        }
+
+        .settings-item label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .settings-item input,
+        .settings-item select {
+            width: 100%;
+            padding: 8px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+        }
+
+        .settings-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-checkbox input {
+            width: auto;
+        }
+
+        .model-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .model-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .model-item:hover {
+            background-color: var(--surface-hover);
+        }
+
+        .model-item.selected {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .model-info {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 4px 0;
+            min-width: 150px;
+            z-index: 1000;
+        }
+
+        .context-menu-item {
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .context-menu-item:hover {
+            background-color: var(--surface-hover);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background-color: var(--border);
+            margin: 4px 0;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-hover);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translate(-50%, -10px);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    DODO 🐼
+                    <span class="privacy-badge">Private</span>
+                    <span class="storage-badge" id="storageBadge" onclick="app.toggleStorageMode()" title="Click to change storage mode">💾 Session</span>
+                </div>
+            </div>
+            
+            <div class="nav-buttons">
+                <button class="nav-btn active" id="chatNavBtn" onclick="app.switchView('chat')">💬 Chat</button>
+                <button class="nav-btn" id="learnNavBtn" onclick="app.switchView('learn')">📚 Learn</button>
+            </div>
+            
+            <div id="chatSidebarContent">
+                <button class="new-chat-btn" onclick="app.newChat()">+ New Chat</button>
+                
+                <div class="storage-options">
+                    <button class="storage-btn" id="storageSessionBtn" onclick="app.setStorageMode('session')">💾 Session</button>
+                    <button class="storage-btn" id="storageLocalBtn" onclick="app.setStorageMode('local')">📀 Persistent</button>
+                </div>
+                
+                <div class="model-selector">
+                    <select id="sidebarModelSelect" onchange="app.changeModel(this.value)">
+                        <option value="llama3.2">🦙 Llama 3.2</option>
+                        <option value="codellama">👨‍💻 CodeLlama</option>
+                        <option value="mistral">🔮 Mistral</option>
+                        <option value="phi3">🌐 Phi-3</option>
+                        <option value="neural-chat">🧠 Neural Chat</option>
+                    </select>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" placeholder="Search conversations..." oninput="app.filterConversations(this.value)">
+                </div>
+                
+                <div class="conversations-list" id="conversationsList"></div>
+            </div>
+            
+            <div class="footer-buttons">
+                <button class="icon-btn" onclick="app.openSettings()" title="Settings">⚙️</button>
+                <button class="icon-btn" onclick="app.exportSession()" title="Save conversations to file">💾</button>
+                <button class="icon-btn" onclick="app.importSession()" title="Load conversations from file">📂</button>
+                <button class="icon-btn" onclick="app.clearSession()" title="Clear all conversations">🗑️</button>
+                <button class="icon-btn" onclick="app.showHelp()" title="Help">❓</button>
+                <button class="icon-btn" onclick="app.openSearch()" title="Search messages">🔍</button>
+            </div>
+            
+            <div class="status" id="status">● Checking...</div>
+            <div class="session-indicator" id="sessionIndicator" onclick="app.toggleStorageMode()">💾 Session • Data clears on tab close • Click to change</div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="header-title">
+                    <span id="currentChatTitle">DODO 🐼</span>
+                    <span class="model-badge" id="currentModel" onclick="app.openModelSelector()">llama3.2 ▼</span>
+                </div>
+                
+                <div class="header-actions" id="chatHeaderActions">
+                    <button class="header-btn" onclick="app.copyChat()" title="Copy chat">📋 Copy</button>
+                    <button class="header-btn" onclick="app.exportChat()" title="Export conversation">📤 Export</button>
+                    <button class="header-btn" onclick="app.clearChat()" title="Clear chat">🗑️ Clear</button>
+                </div>
+            </div>
+            
+            <!-- Chat View -->
+            <div id="chatView" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="chat-area" id="chatArea">
+                    <div class="messages-container" id="messagesContainer"></div>
+                </div>
+                
+                <div class="input-area">
+                    <div class="input-container">
+                        <textarea class="message-input" id="messageInput" placeholder="Message the panda..." rows="1" onkeydown="app.handleKeydown(event)"></textarea>
+                        <button class="send-btn" id="sendBtn" onclick="app.sendMessage()">Send</button>
+                        <button class="stop-btn" id="stopBtn" onclick="app.stopGeneration()" style="display: none;">Stop</button>
+                    </div>
+                    <div class="input-hint">Shift+Enter for new line • Enter to send</div>
+                </div>
+            </div>
+            
+            <!-- Learn View -->
+            <div id="learnView" style="display: none; height: 100%; overflow-y: auto;">
+                <div class="learn-container">
+                    <!-- Welcome Section -->
+                    <div class="learn-section">
+                        <div class="learn-title">
+                            <span>🐼 Meet DODO Panda</span>
+                        </div>
+                        <div class="panda-showcase">
+                            <div class="panda-large float-animation">🐼</div>
+                            <div class="panda-message">
+                                "Hello! I'm DODO, your intelligent AI assistant with a cute panda personality. 
+                                I'm here to help you with anything you need - from coding to creative writing, 
+                                from answering questions to solving problems. Let's learn and grow together!"
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intelligence Section -->
+                    <div class="learn-section">
+                        <div class="learn-title">
+                            <span>🧠 How Intelligent Is DODO?</span>
+                        </div>
+                        
+                        <div class="stats-container">
+                            <div class="stat-item">
+                                <div class="stat-value">1M+</div>
+                                <div class="stat-label">Context Window</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">70B+</div>
+                                <div class="stat-label">Parameter Range</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">100+</div>
+                                <div class="stat-label">Languages</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">24/7</div>
+                                <div class="stat-label">Availability</div>
+                            </div>
+                        </div>
+
+                        <div class="learn-subtitle">Intelligence Highlights</div>
+                        <ul class="capability-list">
+                            <li><strong>Advanced Reasoning:</strong> Can solve complex problems, debug code, and explain difficult concepts</li>
+                            <li><strong>Context Awareness:</strong> Remembers and understands context throughout your conversation</li>
+                            <li><strong>Multi-turn Dialogue:</strong> Maintains coherent conversations with perfect memory</li>
+                            <li><strong>Adaptive Learning:</strong> Adjusts responses based on your preferences and needs</li>
+                            <li><strong>Real-time Processing:</strong> Generates responses in real-time with streaming output</li>
+                            <li><strong>Emotional Intelligence:</strong> Understands tone, sentiment, and responds appropriately</li>
+                        </ul>
+                    </div>
+
+                    <!-- Models Section -->
+                    <div class="learn-section">
+                        <div class="learn-title">
+                            <span>🤖 Models Used by DODO</span>
+                        </div>
+                        
+                        <div class="learn-grid">
+                            <div class="learn-card">
+                                <div class="learn-card-title">🦙 Llama 3.2</div>
+                                <div class="learn-card-content">
+                                    <p>Meta's latest instruction-tuned model</p>
+                                    <p><strong>Best for:</strong> General conversation, reasoning, instruction following</p>
+                                    <p><strong>Context:</strong> 128K tokens</p>
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">👨‍💻 CodeLlama</div>
+                                <div class="learn-card-content">
+                                    <p>Specialized for programming tasks</p>
+                                    <p><strong>Best for:</strong> Code generation, debugging, technical explanations</p>
+                                    <p><strong>Languages:</strong> Python, JavaScript, Java, C++, and more</p>
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">🔮 Mistral</div>
+                                <div class="learn-card-content">
+                                    <p>Fast and efficient model by Mistral AI</p>
+                                    <p><strong>Best for:</strong> Quick responses, creative writing, analysis</p>
+                                    <p><strong>Speed:</strong> Very fast inference</p>
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">🌐 Phi-3</div>
+                                <div class="learn-card-content">
+                                    <p>Microsoft's compact but powerful model</p>
+                                    <p><strong>Best for:</strong> Reasoning, STEM topics, education</p>
+                                    <p><strong>Size:</strong> Small but mighty</p>
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">🧠 Neural Chat</div>
+                                <div class="learn-card-content">
+                                    <p>Fine-tuned for conversational excellence</p>
+                                    <p><strong>Best for:</strong> Natural conversations, storytelling, dialogue</p>
+                                    <p><strong>Style:</strong> Warm and engaging</p>
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">⚡ More Models</div>
+                                <div class="learn-card-content">
+                                    <p>DODO supports any Ollama model!</p>
+                                    <p>You can pull and use models like:</p>
+                                    <p>• Gemma • Qwen • DeepSeek • StarCoder • And many more</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Capabilities Section -->
+                    <div class="learn-section">
+                        <div class="learn-title">
+                            <span>✨ What DODO Can Do</span>
+                        </div>
+                        
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
+                            <span class="feature-tag">💬 Natural Conversation</span>
+                            <span class="feature-tag">🐍 Python Coding</span>
+                            <span class="feature-tag">🐘 JavaScript</span>
+                            <span class="feature-tag">🔍 Debugging</span>
+                            <span class="feature-tag">📝 Creative Writing</span>
+                            <span class="feature-tag">📊 Data Analysis</span>
+                            <span class="feature-tag">🧮 Mathematics</span>
+                            <span class="feature-tag">🔬 Science</span>
+                            <span class="feature-tag">📚 Research Help</span>
+                            <span class="feature-tag">🌍 Translation</span>
+                            <span class="feature-tag">📖 Summarization</span>
+                            <span class="feature-tag">❓ Q&A</span>
+                            <span class="feature-tag">💡 Brainstorming</span>
+                            <span class="feature-tag">📧 Email Writing</span>
+                            <span class="feature-tag">📄 Document Review</span>
+                            <span class="feature-tag">🎯 Problem Solving</span>
+                            <span class="feature-tag">🔧 Technical Support</span>
+                            <span class="feature-tag">🎨 Creative Ideas</span>
+                            <span class="feature-tag">📈 Business Analysis</span>
+                            <span class="feature-tag">🏋️ Workout Plans</span>
+                            <span class="feature-tag">🍳 Recipe Creation</span>
+                            <span class="feature-tag">🎮 Game Design</span>
+                            <span class="feature-tag">📚 Learning Assistant</span>
+                            <span class="feature-tag">🔬 Research Papers</span>
+                        </div>
+                        
+                        <div class="learn-subtitle">Advanced Features</div>
+                        <div class="learn-grid">
+                            <div class="learn-card">
+                                <div class="learn-card-title">📝 Markdown Support</div>
+                                <div class="learn-card-content">
+                                    Full markdown rendering with headings, lists, tables, and formatted text
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">💻 Code Blocks</div>
+                                <div class="learn-card-content">
+                                    Syntax highlighting for all programming languages with copy functionality
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">🔄 Streaming Responses</div>
+                                <div class="learn-card-content">
+                                    See responses generate in real-time with typing animation
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">📊 Table Processing</div>
+                                <div class="learn-card-content">
+                                    Create, read, and analyze tables with proper formatting
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">🎯 Smart Context</div>
+                                <div class="learn-card-content">
+                                    Adjustable context length up to 8192 tokens for long conversations
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">🌡️ Temperature Control</div>
+                                <div class="learn-card-content">
+                                    Adjust creativity from 0.0 (precise) to 2.0 (creative)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interaction Features -->
+                    <div class="learn-section">
+                        <div class="learn-title">
+                            <span>🎯 Interactive Features</span>
+                        </div>
+                        
+                        <div class="learn-grid">
+                            <div class="learn-card">
+                                <div class="learn-card-title">✏️ Edit Messages</div>
+                                <div class="learn-card-content">
+                                    Fix or improve your messages after sending
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">🔄 Regenerate</div>
+                                <div class="learn-card-content">
+                                    Get alternative responses from DODO
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">👍 Message Reactions</div>
+                                <div class="learn-card-content">
+                                    React to messages with 👍 👎 ❤️
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">📋 Copy Messages</div>
+                                <div class="learn-card-content">
+                                    Easily copy any message with one click
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">📌 Pin Conversations</div>
+                                <div class="learn-card-content">
+                                    Keep important chats at the top
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">🔍 Search</div>
+                                <div class="learn-card-content">
+                                    Find messages across all conversations
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">📤 Export</div>
+                                <div class="learn-card-content">
+                                    Save conversations as Markdown, JSON, or TXT
+                                </div>
+                            </div>
+                            
+                            <div class="learn-card">
+                                <div class="learn-card-title">💾 Session Save/Load</div>
+                                <div class="learn-card-content">
+                                    Export and import entire conversation sessions
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy Section -->
+                    <div class="learn-section">
+                        <div class="learn-title">
+                            <span>🔒 Privacy First</span>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">🔐</div>
+                            <h3 style="margin-bottom: 16px;">Your Conversations Are Private</h3>
+                            <p style="color: var(--text-secondary); line-height: 1.6;">
+                                • Each browser tab has its own private session<br>
+                                • No conversations are shared between users<br>
+                                • Data is stored only in your browser<br>
+                                • Choose between session storage (clears on tab close) or persistent storage (saved forever)<br>
+                                • Export to keep conversations permanently
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Get Started -->
+                    <div class="learn-section" style="text-align: center;">
+                        <div class="learn-title" style="justify-content: center;">
+                            <span>🚀 Ready to Start?</span>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <button class="new-chat-btn" onclick="app.switchToChat()" style="padding: 12px 30px; font-size: 16px;">Start Chatting with DODO 🐼</button>
+                        </div>
+                        
+                        <p style="color: var(--text-secondary);">
+                            Just type your message and the panda will help you with anything!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="modal-close" onclick="app.closeModal('settingsModal')">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <div class="settings-tab active" onclick="app.switchSettingsTab('general')">General</div>
+                    <div class="settings-tab" onclick="app.switchSettingsTab('model')">Model</div>
+                    <div class="settings-tab" onclick="app.switchSettingsTab('storage')">Storage</div>
+                    <div class="settings-tab" onclick="app.switchSettingsTab('about')">About</div>
+                </div>
+                
+                <!-- General Settings -->
+                <div class="settings-panel active" id="generalSettings">
+                    <div class="settings-item">
+                        <label>Theme</label>
+                        <select id="settingsTheme">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label>Font Size</label>
+                        <input type="number" id="settingsFontSize" min="10" max="20" value="14">
+                    </div>
+                    
+                    <div class="settings-item settings-checkbox">
+                        <input type="checkbox" id="settingsAutoSave" checked>
+                        <label>Auto-save conversations</label>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label>Retry Attempts (for failed requests)</label>
+                        <input type="number" id="settingsRetryAttempts" min="0" max="5" value="3">
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label>Retry Delay (ms)</label>
+                        <input type="number" id="settingsRetryDelay" min="500" max="5000" step="500" value="1000">
+                    </div>
+                </div>
+                
+                <!-- Model Settings -->
+                <div class="settings-panel" id="modelSettings">
+                    <div class="settings-item">
+                        <label>Available Models</label>
+                        <div class="model-list" id="modelList"></div>
+                        <button class="header-btn" onclick="app.refreshModels()" style="width: 100%; margin-bottom: 8px;">🔄 Refresh Models</button>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label>Temperature: <span id="tempValue">0.7</span></label>
+                        <input type="range" id="settingsTemp" min="0" max="2" step="0.1" value="0.7" oninput="document.getElementById('tempValue').textContent = this.value">
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label>Context Length</label>
+                        <input type="number" id="settingsContextLength" min="512" max="8192" step="512" value="2048">
+                    </div>
+                    
+                    <div class="model-info" id="modelInfo"></div>
+                </div>
+                
+                <!-- Storage Settings -->
+                <div class="settings-panel" id="storageSettings">
+                    <div class="settings-item">
+                        <label>Storage Mode</label>
+                        <select id="settingsStorageMode" onchange="app.previewStorageChange(this.value)">
+                            <option value="session">Session Storage (Clears when tab closes)</option>
+                            <option value="local">Local Storage (Persistent)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label>Current Storage Usage</label>
+                        <div style="background-color: var(--surface); padding: 10px; border-radius: 4px; font-size: 12px;" id="storageUsage">
+                            Calculating...
+                        </div>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <button class="header-btn" onclick="app.migrateStorage()" style="width: 100%;">🔄 Migrate Data to Current Storage</button>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <button class="header-btn" onclick="app.exportSession()" style="width: 100%;">💾 Backup All Data</button>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <button class="header-btn" onclick="app.clearSession()" style="width: 100%; background-color: var(--error); color: white;">🗑️ Clear All Data</button>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <div style="font-size: 11px; color: var(--text-tertiary; margin-top: 8px;">
+                            <strong>Note:</strong> Session storage clears when you close this tab. Local storage persists until you manually clear it.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- About -->
+                <div class="settings-panel" id="aboutSettings">
+                    <div style="text-align: center;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">🐼</div>
+                        <h3>DODO Panda Assistant</h3>
+                        <div style="color: var(--text-tertiary); margin-bottom: 16px;">Version 2.6.0</div>
+                        <div style="text-align: left; line-height: 1.6; font-size: 12px;">
+                            <p><strong>New Features:</strong></p>
+                            <ul>
+                                <li>💾 Persistent storage option - Your conversations now stay saved!</li>
+                                <li>🔄 Quick model switching from sidebar</li>
+                                <li>🔁 Automatic retry for failed requests</li>
+                                <li>📊 Storage usage monitor</li>
+                            </ul>
+                            <p><strong>Privacy First:</strong></p>
+                            <ul>
+                                <li>🔒 Each tab has its own private session</li>
+                                <li>💬 No conversations are shared between users</li>
+                                <li>🗑️ Choose between temporary or permanent storage</li>
+                                <li>💾 Export to keep conversations permanently</li>
+                            </ul>
+                            <p><strong>Features:</strong></p>
+                            <ul>
+                                <li>Smart scrolling</li>
+                                <li>Multi-model support</li>
+                                <li>Markdown support with tables</li>
+                                <li>Code highlighting</li>
+                                <li>Message reactions</li>
+                                <li>Edit messages</li>
+                                <li>Search conversations</li>
+                            </ul>
+                            <p>Made with ❤️ for private conversations</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="app.saveSettings()">Save</button>
+                <button class="modal-btn secondary" onclick="app.closeModal('settingsModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search Modal -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Search Messages</h3>
+                <button class="modal-close" onclick="app.closeModal('searchModal')">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <input type="text" id="searchInput" placeholder="Type to search..." style="width: 100%; padding: 8px; margin-bottom: 16px;" oninput="app.performSearch(this.value)">
+                <div class="model-list" id="searchResults" style="max-height: 300px;"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="app.closeModal('searchModal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Message Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Message</h3>
+                <button class="modal-close" onclick="app.closeModal('editModal')">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <textarea id="editText" style="width: 100%; height: 200px; padding: 8px; background-color: var(--input-bg); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="app.saveEdit()">Save</button>
+                <button class="modal-btn secondary" onclick="app.closeModal('editModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pull Model Modal -->
+    <div class="modal" id="pullModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Pull New Model</h3>
+                <button class="modal-close" onclick="app.closeModal('pullModal')">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <input type="text" id="pullModelName" placeholder="e.g., llama3.2, codellama, phi3" style="width: 100%; padding: 8px;">
+                <div class="model-info" style="margin-top: 8px;">This will open instructions to pull the model.</div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="app.pullModel()">Pull</button>
+                <button class="modal-btn secondary" onclick="app.closeModal('pullModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>Help - DODO Panda Assistant</h3>
+                <button class="modal-close" onclick="app.closeModal('helpModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="helpContent" style="white-space: pre-wrap; font-family: inherit; font-size: 13px; line-height: 1.6;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="app.closeModal('helpModal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Model Selector Modal -->
+    <div class="modal" id="modelSelectorModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Select Model</h3>
+                <button class="modal-close" onclick="app.closeModal('modelSelectorModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="model-list" id="quickModelList" style="max-height: 300px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" onclick="app.closeModal('modelSelectorModal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Main Application
+        const app = {
+            version: '2.6.0',
+            settings: {
+                theme: 'dark',
+                model: 'llama3.2',
+                temperature: 0.7,
+                fontSize: 14,
+                autoSave: true,
+                contextLength: 2048,
+                storageMode: 'local', // Default to local now for better UX
+                retryAttempts: 3,
+                retryDelay: 1000
+            },
+            
+            conversations: [],
+            currentConversationId: null,
+            availableModels: [],
+            isGenerating: false,
+            currentEditId: null,
+            currentReactions: {},
+            userScrolled: false,
+            autoScrollEnabled: true,
+            currentView: 'chat',
+            abortController: null,
+            retryCount: 0,
+            
+            init() {
+                this.loadSettings();
+                this.loadConversations();
+                this.checkOllama();
+                this.setupEventListeners();
+                this.renderSidebar();
+                this.updateStorageUI();
+                
+                window.addEventListener('beforeunload', () => {
+                    // Auto-save if enabled
+                    if (this.settings.autoSave) {
+                        this.saveConversations();
+                    }
+                });
+                
+                if (this.conversations.length > 0) {
+                    this.loadConversation(this.conversations[this.conversations.length - 1].id);
+                } else {
+                    this.showWelcome();
+                }
+                
+                // Set theme selector in settings modal only
+                document.getElementById('settingsTheme').value = this.settings.theme;
+                document.getElementById('settingsFontSize').value = this.settings.fontSize;
+                document.getElementById('settingsTemp').value = this.settings.temperature;
+                document.getElementById('tempValue').textContent = this.settings.temperature;
+                document.getElementById('settingsContextLength').value = this.settings.contextLength;
+                document.getElementById('settingsStorageMode').value = this.settings.storageMode;
+                document.getElementById('settingsRetryAttempts').value = this.settings.retryAttempts;
+                document.getElementById('settingsRetryDelay').value = this.settings.retryDelay;
+                
+                // Update storage mode buttons
+                this.updateStorageModeButtons();
+                
+                // Chat area scroll monitoring
+                const chatArea = document.getElementById('chatArea');
+                chatArea.addEventListener('scroll', () => {
+                    const { scrollTop, scrollHeight, clientHeight } = chatArea;
+                    const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+                    this.autoScrollEnabled = isNearBottom;
+                    
+                    if (!this.userScrolled) {
+                        this.userScrolled = true;
+                        setTimeout(() => {
+                            this.userScrolled = false;
+                        }, 2000);
+                    }
+                });
+            },
+            
+            setupEventListeners() {
+                // Resize textarea
+                const textarea = document.getElementById('messageInput');
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = (this.scrollHeight) + 'px';
+                });
+            },
+            
+            // Storage Functions - FIXED VERSION
+            setStorageMode(mode) {
+                if (mode === this.settings.storageMode) return;
+                
+                // Ask for confirmation before switching
+                if (!confirm(`Switch to ${mode === 'local' ? 'persistent' : 'temporary'} storage? Your current conversations will be migrated.`)) {
+                    // Reset the select if confirmation cancelled
+                    document.getElementById('settingsStorageMode').value = this.settings.storageMode;
+                    return;
+                }
+                
+                const oldMode = this.settings.storageMode;
+                const currentData = this.conversations;
+                
+                // Clear old storage
+                if (oldMode === 'local') {
+                    localStorage.removeItem('dodo_conversations');
+                } else {
+                    sessionStorage.removeItem('dodo_conversations');
+                }
+                
+                // Update mode
+                this.settings.storageMode = mode;
+                this.saveSettings();
+                
+                // Save to new storage
+                if (mode === 'local') {
+                    localStorage.setItem('dodo_conversations', JSON.stringify(currentData));
+                } else {
+                    sessionStorage.setItem('dodo_conversations', JSON.stringify(currentData));
+                }
+                
+                this.updateStorageUI();
+                this.showToast(`Switched to ${mode === 'local' ? 'persistent' : 'temporary'} storage`);
+            },
+            
+            toggleStorageMode() {
+                const newMode = this.settings.storageMode === 'session' ? 'local' : 'session';
+                this.setStorageMode(newMode);
+            },
+            
+            updateStorageUI() {
+                const badge = document.getElementById('storageBadge');
+                const indicator = document.getElementById('sessionIndicator');
+                const sessionBtn = document.getElementById('storageSessionBtn');
+                const localBtn = document.getElementById('storageLocalBtn');
+                const storageSelect = document.getElementById('settingsStorageMode');
+                
+                if (this.settings.storageMode === 'local') {
+                    badge.innerHTML = '📀 Persistent';
+                    badge.title = 'Data is saved permanently';
+                    indicator.innerHTML = '📀 Persistent • Data saved forever • Click to change';
+                    if (sessionBtn) sessionBtn.classList.remove('active');
+                    if (localBtn) localBtn.classList.add('active');
+                    if (storageSelect) storageSelect.value = 'local';
+                } else {
+                    badge.innerHTML = '💾 Session';
+                    badge.title = 'Data clears when tab closes';
+                    indicator.innerHTML = '💾 Session • Data clears on tab close • Click to change';
+                    if (sessionBtn) sessionBtn.classList.add('active');
+                    if (localBtn) localBtn.classList.remove('active');
+                    if (storageSelect) storageSelect.value = 'session';
+                }
+                
+                this.updateStorageUsage();
+            },
+            
+            updateStorageModeButtons() {
+                const sessionBtn = document.getElementById('storageSessionBtn');
+                const localBtn = document.getElementById('storageLocalBtn');
+                
+                if (sessionBtn && localBtn) {
+                    if (this.settings.storageMode === 'local') {
+                        sessionBtn.classList.remove('active');
+                        localBtn.classList.add('active');
+                    } else {
+                        sessionBtn.classList.add('active');
+                        localBtn.classList.remove('active');
+                    }
+                }
+            },
+            
+            updateStorageUsage() {
+                const usageElement = document.getElementById('storageUsage');
+                if (!usageElement) return;
+                
+                try {
+                    let totalSize = 0;
+                    let itemCount = 0;
+                    
+                    // Check both storages
+                    if (localStorage.length > 0) {
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const key = localStorage.key(i);
+                            const value = localStorage.getItem(key);
+                            totalSize += (key.length + value.length) * 2;
+                            itemCount++;
+                        }
+                    }
+                    
+                    if (sessionStorage.length > 0) {
+                        for (let i = 0; i < sessionStorage.length; i++) {
+                            const key = sessionStorage.key(i);
+                            const value = sessionStorage.getItem(key);
+                            totalSize += (key.length + value.length) * 2;
+                            itemCount++;
+                        }
+                    }
+                    
+                    const sizeInKB = (totalSize / 1024).toFixed(2);
+                    usageElement.innerHTML = `Total items: ${itemCount} | Size: ~${sizeInKB} KB<br>
+                        <span style="font-size: 10px; color: var(--text-tertiary);">Current mode: ${this.settings.storageMode === 'local' ? 'Persistent' : 'Temporary'}</span>`;
+                } catch (e) {
+                    usageElement.innerHTML = 'Unable to calculate';
+                }
+            },
+            
+            previewStorageChange(mode) {
+                // Just for UI preview, actual change happens on save
+                const usageElement = document.getElementById('storageUsage');
+                if (usageElement) {
+                    usageElement.innerHTML = `Preview: Will switch to ${mode === 'local' ? 'persistent' : 'temporary'} storage.<br>
+                        Click Save to apply changes.`;
+                }
+            },
+            
+            migrateStorage() {
+                const currentData = this.conversations;
+                
+                // Clear both storages
+                localStorage.removeItem('dodo_conversations');
+                sessionStorage.removeItem('dodo_conversations');
+                
+                // Save to current mode's storage
+                if (this.settings.storageMode === 'local') {
+                    localStorage.setItem('dodo_conversations', JSON.stringify(currentData));
+                } else {
+                    sessionStorage.setItem('dodo_conversations', JSON.stringify(currentData));
+                }
+                
+                this.showToast('Data migrated successfully');
+                this.updateStorageUsage();
+            },
+            
+            saveConversations() {
+                if (!this.conversations) return;
+                
+                const data = JSON.stringify(this.conversations);
+                try {
+                    if (this.settings.storageMode === 'local') {
+                        localStorage.setItem('dodo_conversations', data);
+                        console.log('Saved to local storage');
+                    } else {
+                        sessionStorage.setItem('dodo_conversations', data);
+                        console.log('Saved to session storage');
+                    }
+                } catch (e) {
+                    console.error('Failed to save conversations:', e);
+                    this.showToast('Failed to save conversations', 3000);
+                }
+            },
+            
+            loadConversations() {
+                let saved = null;
+                
+                // Try current mode first
+                if (this.settings.storageMode === 'local') {
+                    saved = localStorage.getItem('dodo_conversations');
+                    console.log('Loading from local storage');
+                } else {
+                    saved = sessionStorage.getItem('dodo_conversations');
+                    console.log('Loading from session storage');
+                }
+                
+                // If not found, try the other mode (for backward compatibility)
+                if (!saved) {
+                    if (this.settings.storageMode === 'local') {
+                        saved = sessionStorage.getItem('dodo_conversations');
+                        if (saved) console.log('Found data in session storage, migrating...');
+                    } else {
+                        saved = localStorage.getItem('dodo_conversations');
+                        if (saved) console.log('Found data in local storage, migrating...');
+                    }
+                    
+                    // If found in other storage, migrate to current
+                    if (saved) {
+                        try {
+                            const data = JSON.parse(saved);
+                            this.conversations = data;
+                            this.saveConversations(); // Save to current storage
+                            // Clear the old storage
+                            if (this.settings.storageMode === 'local') {
+                                sessionStorage.removeItem('dodo_conversations');
+                            } else {
+                                localStorage.removeItem('dodo_conversations');
+                            }
+                            return;
+                        } catch (e) {
+                            console.error('Failed to migrate data:', e);
+                        }
+                    }
+                }
+                
+                if (saved) {
+                    try {
+                        this.conversations = JSON.parse(saved);
+                        console.log(`Loaded ${this.conversations.length} conversations`);
+                    } catch (e) {
+                        console.error('Failed to load conversations:', e);
+                        this.conversations = [];
+                    }
+                } else {
+                    this.conversations = [];
+                    console.log('No saved conversations found');
+                }
+            },
+            
+            // Model Management
+            changeModel(model) {
+                this.settings.model = model;
+                this.saveSettings();
+                document.getElementById('currentModel').textContent = model + ' ▼';
+                const select = document.getElementById('sidebarModelSelect');
+                if (select) select.value = model;
+                this.showToast(`Switched to ${model}`);
+            },
+            
+            openModelSelector() {
+                const modal = document.getElementById('modelSelectorModal');
+                const list = document.getElementById('quickModelList');
+                
+                list.innerHTML = '';
+                
+                const models = this.availableModels.length > 0 ? this.availableModels : 
+                    ['llama3.2', 'codellama', 'mistral', 'phi3', 'neural-chat'];
+                
+                models.forEach(model => {
+                    const item = document.createElement('div');
+                    item.className = 'model-item' + (model === this.settings.model ? ' selected' : '');
+                    item.textContent = model;
+                    item.onclick = () => {
+                        this.changeModel(model);
+                        this.closeModal('modelSelectorModal');
+                    };
+                    list.appendChild(item);
+                });
+                
+                this.openModal('modelSelectorModal');
+            },
+            
+            // Error Handling with Retry
+            async fetchWithRetry(url, options, maxRetries = null) {
+                const retries = maxRetries !== null ? maxRetries : this.settings.retryAttempts;
+                const delay = this.settings.retryDelay;
+                
+                for (let i = 0; i <= retries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response;
+                    } catch (error) {
+                        this.retryCount = i + 1;
+                        
+                        if (i === retries) {
+                            throw error;
+                        }
+                        
+                        const status = document.getElementById('status');
+                        status.textContent = `⟳ Retrying (${i + 1}/${retries})...`;
+                        status.className = 'status retrying';
+                        
+                        this.showRetryMessage(error.message, i + 1, retries);
+                        
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            },
+            
+            showRetryMessage(error, attempt, maxRetries) {
+                const existing = document.querySelector('.error-message');
+                if (existing) existing.remove();
+                
+                const chatArea = document.getElementById('chatArea');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = `
+                    <span>⚠️ Connection failed. Retrying (${attempt}/${maxRetries})...</span>
+                    <button onclick="app.cancelRetry()">Cancel</button>
+                `;
+                
+                chatArea.insertBefore(errorDiv, chatArea.firstChild);
+            },
+            
+            cancelRetry() {
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
+                }
+                
+                const errorMsg = document.querySelector('.error-message');
+                if (errorMsg) errorMsg.remove();
+                
+                const status = document.getElementById('status');
+                if (this.availableModels.length > 0) {
+                    status.textContent = `● Online (${this.availableModels.length} models) 🐼`;
+                    status.className = 'status online';
+                } else {
+                    status.textContent = '● Offline';
+                    status.className = 'status offline';
+                }
+                
+                this.isGenerating = false;
+                document.getElementById('sendBtn').style.display = 'block';
+                document.getElementById('stopBtn').style.display = 'none';
+                document.getElementById('messageInput').disabled = false;
+                this.removeTypingIndicator();
+            },
+            
+            // View Switching
+            switchView(view) {
+                this.currentView = view;
+                
+                document.getElementById('chatNavBtn').classList.toggle('active', view === 'chat');
+                document.getElementById('learnNavBtn').classList.toggle('active', view === 'learn');
+                
+                document.getElementById('chatView').style.display = view === 'chat' ? 'flex' : 'none';
+                document.getElementById('learnView').style.display = view === 'learn' ? 'block' : 'none';
+                
+                document.getElementById('chatSidebarContent').style.display = view === 'chat' ? 'block' : 'none';
+                document.getElementById('chatHeaderActions').style.display = view === 'chat' ? 'flex' : 'none';
+                
+                if (view === 'learn') {
+                    document.getElementById('currentChatTitle').textContent = 'Learn About DODO 📚';
+                } else {
+                    const conversation = this.conversations.find(c => c.id === this.currentConversationId);
+                    document.getElementById('currentChatTitle').textContent = conversation ? conversation.title + ' 🐼' : 'DODO 🐼';
+                }
+            },
+            
+            switchToChat() {
+                this.switchView('chat');
+            },
+            
+            // Settings Functions
+            saveSettings() {
+                localStorage.setItem('dodo_settings', JSON.stringify(this.settings));
+            },
+            
+            loadSettings() {
+                const saved = localStorage.getItem('dodo_settings');
+                if (saved) {
+                    try {
+                        this.settings = { ...this.settings, ...JSON.parse(saved) };
+                    } catch (e) {
+                        console.error('Failed to load settings:', e);
+                    }
+                }
+            },
+            
+            clearSession() {
+                if (confirm('Clear all conversations? This cannot be undone.')) {
+                    this.conversations = [];
+                    this.currentConversationId = null;
+                    
+                    // Clear both storages
+                    localStorage.removeItem('dodo_conversations');
+                    sessionStorage.removeItem('dodo_conversations');
+                    
+                    this.newChat();
+                    this.showToast('All conversations cleared');
+                    this.updateStorageUsage();
+                }
+            },
+            
+            exportSession() {
+                const data = {
+                    conversations: this.conversations,
+                    version: this.version,
+                    timestamp: new Date().toISOString(),
+                    storageMode: this.settings.storageMode
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dodo_backup_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.showToast('Backup exported!');
+            },
+            
+            importSession() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            
+                            if (data.conversations) {
+                                this.conversations = data.conversations;
+                                this.saveConversations(); // Save to current storage
+                                this.renderSidebar();
+                                this.newChat();
+                                this.showToast('Backup loaded!');
+                                this.updateStorageUsage();
+                            }
+                        } catch (error) {
+                            alert('Failed to load backup: ' + error.message);
+                        }
+                    };
+                    
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            },
+            
+            // Theme Functions
+            changeTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                this.settings.theme = theme;
+                this.saveSettings();
+            },
+            
+            // Conversation Management
+            newChat() {
+                if (this.isGenerating) {
+                    this.stopGeneration();
+                }
+                
+                this.currentConversationId = null;
+                document.getElementById('messageInput').value = '';
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('sendBtn').style.display = 'block';
+                document.getElementById('stopBtn').style.display = 'none';
+                
+                this.showWelcome();
+                this.renderSidebar();
+                this.switchView('chat');
+            },
+            
+            createConversation(firstMessage) {
+                const id = 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const title = firstMessage.length > 50 ? firstMessage.substring(0, 50) + '...' : firstMessage;
+                
+                const conversation = {
+                    id: id,
+                    title: title,
+                    timestamp: new Date().toISOString(),
+                    pinned: false,
+                    messages: []
+                };
+                
+                this.conversations.push(conversation);
+                this.saveConversations();
+                return id;
+            },
+            
+            loadConversation(id) {
+                const conversation = this.conversations.find(c => c.id === id);
+                if (!conversation) return;
+                
+                this.currentConversationId = id;
+                document.getElementById('currentChatTitle').textContent = conversation.title + ' 🐼';
+                
+                const container = document.getElementById('messagesContainer');
+                container.innerHTML = '';
+                
+                conversation.messages.forEach(msg => {
+                    this.renderMessage(msg.content, msg.role === 'user', msg.timestamp, msg.id);
+                });
+                
+                this.renderSidebar();
+                this.scrollToBottom();
+                this.switchView('chat');
+            },
+            
+            renderSidebar() {
+                const list = document.getElementById('conversationsList');
+                list.innerHTML = '';
+                
+                const sorted = [...this.conversations].sort((a, b) => {
+                    if (a.pinned && !b.pinned) return -1;
+                    if (!a.pinned && b.pinned) return 1;
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
+                
+                sorted.forEach(conv => {
+                    const item = document.createElement('div');
+                    item.className = 'conversation-item' + (conv.pinned ? ' pinned' : '');
+                    if (conv.id === this.currentConversationId) {
+                        item.classList.add('selected');
+                    }
+                    
+                    const titleSpan = document.createElement('span');
+                    titleSpan.textContent = conv.title.substring(0, 35);
+                    item.appendChild(titleSpan);
+                    
+                    const menuBtn = document.createElement('span');
+                    menuBtn.className = 'conversation-menu';
+                    menuBtn.textContent = '⋮';
+                    menuBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.showConversationMenu(e, conv.id);
+                    };
+                    item.appendChild(menuBtn);
+                    
+                    item.onclick = () => this.loadConversation(conv.id);
+                    list.appendChild(item);
+                });
+            },
+            
+            filterConversations(query) {
+                const items = document.querySelectorAll('.conversation-item');
+                items.forEach(item => {
+                    const text = item.querySelector('span:first-child').textContent.toLowerCase();
+                    item.style.display = text.includes(query.toLowerCase()) ? 'flex' : 'none';
+                });
+            },
+            
+            showConversationMenu(event, convId) {
+                const existing = document.querySelector('.context-menu');
+                if (existing) existing.remove();
+                
+                const menu = document.createElement('div');
+                menu.className = 'context-menu';
+                menu.style.left = event.pageX + 'px';
+                menu.style.top = event.pageY + 'px';
+                
+                const conversation = this.conversations.find(c => c.id === convId);
+                
+                const pinItem = document.createElement('div');
+                pinItem.className = 'context-menu-item';
+                pinItem.textContent = conversation.pinned ? '📌 Unpin' : '📌 Pin';
+                pinItem.onclick = () => this.togglePin(convId);
+                menu.appendChild(pinItem);
+                
+                const renameItem = document.createElement('div');
+                renameItem.className = 'context-menu-item';
+                renameItem.textContent = '✏️ Rename';
+                renameItem.onclick = () => this.renameConversation(convId);
+                menu.appendChild(renameItem);
+                
+                const exportItem = document.createElement('div');
+                exportItem.className = 'context-menu-item';
+                exportItem.textContent = '📤 Export';
+                exportItem.onclick = () => this.exportConversation(convId);
+                menu.appendChild(exportItem);
+                
+                const separator = document.createElement('div');
+                separator.className = 'context-menu-separator';
+                menu.appendChild(separator);
+                
+                const deleteItem = document.createElement('div');
+                deleteItem.className = 'context-menu-item';
+                deleteItem.textContent = '🗑️ Delete';
+                deleteItem.onclick = () => this.deleteConversation(convId);
+                menu.appendChild(deleteItem);
+                
+                document.body.appendChild(menu);
+                
+                const closeMenu = (e) => {
+                    if (!menu.contains(e.target)) {
+                        menu.remove();
+                        document.removeEventListener('click', closeMenu);
+                    }
+                };
+                setTimeout(() => document.addEventListener('click', closeMenu), 100);
+            },
+            
+            togglePin(convId) {
+                const conversation = this.conversations.find(c => c.id === convId);
+                if (conversation) {
+                    conversation.pinned = !conversation.pinned;
+                    this.saveConversations();
+                    this.renderSidebar();
+                }
+            },
+            
+            renameConversation(convId) {
+                const conversation = this.conversations.find(c => c.id === convId);
+                if (!conversation) return;
+                
+                const newName = prompt('Enter new name:', conversation.title);
+                if (newName && newName.trim()) {
+                    conversation.title = newName.trim();
+                    this.saveConversations();
+                    this.renderSidebar();
+                    
+                    if (this.currentConversationId === convId) {
+                        document.getElementById('currentChatTitle').textContent = newName.trim() + ' 🐼';
+                    }
+                }
+            },
+            
+            deleteConversation(convId) {
+                if (!confirm('Are you sure you want to delete this conversation?')) return;
+                
+                this.conversations = this.conversations.filter(c => c.id !== convId);
+                this.saveConversations();
+                
+                if (this.currentConversationId === convId) {
+                    if (this.conversations.length > 0) {
+                        this.loadConversation(this.conversations[this.conversations.length - 1].id);
+                    } else {
+                        this.newChat();
+                    }
+                } else {
+                    this.renderSidebar();
+                }
+            },
+            
+            // Welcome Screen
+            showWelcome() {
+                const container = document.getElementById('messagesContainer');
+                container.innerHTML = `
+                    <div class="welcome-screen">
+                        <div class="welcome-panda">🐼</div>
+                        <div class="welcome-title">${this.getGreeting()}! How can the panda help? 🐼</div>
+                        <div class="suggestions">
+                            ${['Explain quantum computing', 'Write Python code', 'Help with email', 'Create workout plan', 'Debug this code', 'Write a story'].map(text => 
+                                `<button class="suggestion-btn" onclick="app.useSuggestion('${text.replace(/'/g, "\\'")}')">${text}</button>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            getGreeting() {
+                const hour = new Date().getHours();
+                if (hour >= 5 && hour < 12) return 'Good morning';
+                if (hour >= 12 && hour < 17) return 'Good afternoon';
+                if (hour >= 17 && hour < 22) return 'Good evening';
+                return 'Good night';
+            },
+            
+            useSuggestion(text) {
+                document.getElementById('messageInput').value = text;
+                this.sendMessage();
+            },
+            
+            // Message Functions
+            async sendMessage() {
+                const input = document.getElementById('messageInput');
+                const text = input.value.trim();
+                if (!text || this.isGenerating) return;
+                
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
+                }
+                
+                input.value = '';
+                input.style.height = 'auto';
+                
+                const container = document.getElementById('messagesContainer');
+                if (container.querySelector('.welcome-screen')) {
+                    container.innerHTML = '';
+                }
+                
+                const timestamp = new Date().toISOString();
+                const msgId = this.renderMessage(text, true, timestamp);
+                
+                if (!this.currentConversationId) {
+                    this.currentConversationId = this.createConversation(text);
+                }
+                
+                const conversation = this.conversations.find(c => c.id === this.currentConversationId);
+                conversation.messages.push({
+                    id: msgId,
+                    role: 'user',
+                    content: text,
+                    timestamp: timestamp
+                });
+                conversation.timestamp = timestamp;
+                this.saveConversations();
+                this.renderSidebar();
+                
+                this.showTypingIndicator();
+                
+                document.getElementById('sendBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'block';
+                input.disabled = true;
+                this.isGenerating = true;
+                
+                await this.streamResponse(text, conversation.messages);
+            },
+            
+            async streamResponse(message, history) {
+                this.abortController = new AbortController();
+                
+                try {
+                    const messages = [
+                        { role: 'system', content: 'You are DODO, a helpful AI assistant with a cute panda personality.' },
+                        ...history.slice(-10).map(m => ({ role: m.role, content: m.content }))
+                    ];
+                    
+                    const response = await this.fetchWithRetry('http://localhost:11434/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: this.abortController.signal,
+                        body: JSON.stringify({
+                            model: this.settings.model,
+                            messages: messages,
+                            stream: true,
+                            options: {
+                                temperature: parseFloat(this.settings.temperature),
+                                num_predict: 2048,
+                                top_k: 40,
+                                top_p: 0.9,
+                                repeat_penalty: 1.1
+                            }
+                        })
+                    });
+                    
+                    const errorMsg = document.querySelector('.error-message');
+                    if (errorMsg) errorMsg.remove();
+                    
+                    const status = document.getElementById('status');
+                    if (this.availableModels.length > 0) {
+                        status.textContent = `● Online (${this.availableModels.length} models) 🐼`;
+                        status.className = 'status online';
+                    }
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullResponse = '';
+                    
+                    const botMsgId = 'msg_' + Date.now();
+                    this.renderMessage('', false, new Date().toISOString(), botMsgId);
+                    
+                    while (this.isGenerating) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+                        
+                        for (const line of lines) {
+                            if (line.trim()) {
+                                try {
+                                    const data = JSON.parse(line);
+                                    if (data.message?.content) {
+                                        fullResponse += data.message.content;
+                                        this.updateMessage(botMsgId, fullResponse);
+                                        this.scrollToBottom();
+                                    }
+                                } catch (e) {
+                                    console.error('Parse error:', e);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (this.isGenerating) {
+                        this.onGenerationComplete(fullResponse, botMsgId);
+                    }
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        console.log('Request was aborted');
+                        this.removeTypingIndicator();
+                        document.getElementById('sendBtn').style.display = 'block';
+                        document.getElementById('stopBtn').style.display = 'none';
+                        document.getElementById('messageInput').disabled = false;
+                        this.showToast('⏹️ Generation stopped');
+                    } else {
+                        this.onGenerationError(error.message);
+                    }
+                } finally {
+                    this.abortController = null;
+                    this.retryCount = 0;
+                }
+            },
+            
+            onGenerationComplete(fullResponse, msgId) {
+                this.removeTypingIndicator();
+                
+                document.getElementById('sendBtn').style.display = 'block';
+                document.getElementById('stopBtn').style.display = 'none';
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('messageInput').focus();
+                this.isGenerating = false;
+                
+                if (fullResponse && this.currentConversationId) {
+                    const conversation = this.conversations.find(c => c.id === this.currentConversationId);
+                    conversation.messages.push({
+                        id: msgId,
+                        role: 'assistant',
+                        content: fullResponse,
+                        timestamp: new Date().toISOString(),
+                        completed: true
+                    });
+                    this.saveConversations();
+                }
+            },
+            
+            onGenerationError(error) {
+                this.removeTypingIndicator();
+                
+                document.getElementById('sendBtn').style.display = 'block';
+                document.getElementById('stopBtn').style.display = 'none';
+                document.getElementById('messageInput').disabled = false;
+                this.isGenerating = false;
+                
+                const existing = document.querySelector('.error-message');
+                if (existing) existing.remove();
+                
+                this.renderMessage(`⚠️ **Error:** ${error}`, false, new Date().toISOString());
+                
+                const status = document.getElementById('status');
+                status.textContent = '✗ Error';
+                status.className = 'status offline';
+            },
+            
+            stopGeneration() {
+                if (this.abortController) {
+                    this.abortController.abort();
+                    this.abortController = null;
+                }
+                
+                this.isGenerating = false;
+                document.getElementById('sendBtn').style.display = 'block';
+                document.getElementById('stopBtn').style.display = 'none';
+                document.getElementById('messageInput').disabled = false;
+                this.removeTypingIndicator();
+                
+                const errorMsg = document.querySelector('.error-message');
+                if (errorMsg) errorMsg.remove();
+                
+                this.showToast('⏹️ Generation stopped');
+            },
+            
+            renderMessage(content, isUser, timestamp, existingId = null) {
+                const container = document.getElementById('messagesContainer');
+                const msgId = existingId || 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = `message-wrapper ${isUser ? 'user' : 'bot'}`;
+                wrapper.id = msgId;
+                
+                const msgContainer = document.createElement('div');
+                msgContainer.className = 'message-container';
+                
+                const avatar = document.createElement('div');
+                avatar.className = `avatar ${isUser ? 'user' : 'bot'}`;
+                avatar.textContent = isUser ? '👤' : '🐼';
+                msgContainer.appendChild(avatar);
+                
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                
+                const header = document.createElement('div');
+                header.className = 'message-header';
+                
+                const name = document.createElement('span');
+                name.className = 'message-name';
+                name.textContent = isUser ? 'You' : 'DODO Panda';
+                header.appendChild(name);
+                
+                const actions = document.createElement('div');
+                actions.className = 'message-actions';
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'message-action';
+                copyBtn.textContent = '📋';
+                copyBtn.title = 'Copy message';
+                copyBtn.onclick = () => this.copyMessage(content);
+                actions.appendChild(copyBtn);
+                
+                if (isUser) {
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'message-action';
+                    editBtn.textContent = '✏️';
+                    editBtn.title = 'Edit message';
+                    editBtn.onclick = () => this.editMessage(msgId, content);
+                    actions.appendChild(editBtn);
+                } else {
+                    const regenBtn = document.createElement('button');
+                    regenBtn.className = 'message-action';
+                    regenBtn.textContent = '🔄';
+                    regenBtn.title = 'Regenerate';
+                    regenBtn.onclick = () => this.regenerateMessage(msgId);
+                    actions.appendChild(regenBtn);
+                }
+                
+                header.appendChild(actions);
+                bubble.appendChild(header);
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.innerHTML = this.renderMarkdown(content);
+                bubble.appendChild(contentDiv);
+                
+                const footer = document.createElement('div');
+                footer.className = 'message-footer';
+                
+                const time = document.createElement('span');
+                time.className = 'message-time';
+                time.textContent = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+                footer.appendChild(time);
+                
+                const reactions = document.createElement('div');
+                reactions.className = 'message-reactions';
+                
+                ['👍', '👎', '❤️'].forEach(emoji => {
+                    const btn = document.createElement('button');
+                    btn.className = 'reaction-btn';
+                    btn.textContent = emoji;
+                    btn.onclick = () => this.toggleReaction(msgId, emoji);
+                    
+                    if (this.currentReactions[msgId]?.includes(emoji)) {
+                        btn.classList.add('active');
+                    }
+                    
+                    reactions.appendChild(btn);
+                });
+                
+                footer.appendChild(reactions);
+                bubble.appendChild(footer);
+                
+                msgContainer.appendChild(bubble);
+                wrapper.appendChild(msgContainer);
+                
+                container.appendChild(wrapper);
+                this.scrollToBottom();
+                
+                return msgId;
+            },
+            
+            updateMessage(msgId, content) {
+                const wrapper = document.getElementById(msgId);
+                if (wrapper) {
+                    const contentDiv = wrapper.querySelector('.message-content');
+                    if (contentDiv) {
+                        contentDiv.innerHTML = this.renderMarkdown(content);
+                    }
+                }
+            },
+            
+            renderMarkdown(text) {
+                if (!text) return '';
+                
+                let html = text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                
+                html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+                    const lines = code.split('\n');
+                    const language = lines[0].trim();
+                    const codeContent = lines.slice(1).join('\n').trim() || code;
+                    
+                    return `<div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">${language || 'code'}</span>
+                            <button class="code-copy" onclick="app.copyCode(\`${codeContent.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">Copy</button>
+                        </div>
+                        <div class="code-content">${codeContent.replace(/ /g, '&nbsp;').replace(/\n/g, '<br>')}</div>
+                    </div>`;
+                });
+                
+                const tableRegex = /\|(.+)\|\s*\n\|([-\s:|]+)\|\s*\n((?:\|.+\|\s*\n?)*)/g;
+                html = html.replace(tableRegex, (match, headerRow, separatorRow, bodyRows) => {
+                    const headers = headerRow.split('|').filter(cell => cell.trim()).map(cell => cell.trim());
+                    
+                    const alignments = separatorRow.split('|').filter(cell => cell.trim()).map(cell => {
+                        if (cell.startsWith(':') && cell.endsWith(':')) return 'center';
+                        if (cell.endsWith(':')) return 'right';
+                        if (cell.startsWith(':')) return 'left';
+                        return 'left';
+                    });
+                    
+                    let tableHtml = '<div class="table-wrapper" style="overflow-x: auto; margin: 8px 0;"><table style="border-collapse: collapse; width: 100%;">';
+                    
+                    tableHtml += '<thead><tr>';
+                    headers.forEach((header, i) => {
+                        const align = alignments[i] || 'left';
+                        tableHtml += `<th style="border: 1px solid var(--border); padding: 8px; text-align: ${align}; background-color: var(--surface-hover);">${header}</th>`;
+                    });
+                    tableHtml += '</tr></thead>';
+                    
+                    tableHtml += '<tbody>';
+                    const rows = bodyRows.trim().split('\n');
+                    rows.forEach(row => {
+                        if (row.trim()) {
+                            const cells = row.split('|').filter(cell => cell.trim()).map(cell => cell.trim());
+                            tableHtml += '<tr>';
+                            cells.forEach((cell, i) => {
+                                const align = alignments[i] || 'left';
+                                tableHtml += `<td style="border: 1px solid var(--border); padding: 8px; text-align: ${align};">${cell}</td>`;
+                            });
+                            tableHtml += '</tr>';
+                        }
+                    });
+                    tableHtml += '</tbody></table></div>';
+                    
+                    return tableHtml;
+                });
+                
+                html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+                html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+                html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+                html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+                html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+                html = html.replace(/\n/g, '<br>');
+                
+                return html;
+            },
+            
+            copyMessage(text) {
+                navigator.clipboard.writeText(text);
+                this.showToast('Copied!');
+            },
+            
+            copyCode(code) {
+                navigator.clipboard.writeText(code);
+                this.showToast('Code copied!');
+            },
+            
+            editMessage(msgId, content) {
+                this.currentEditId = msgId;
+                document.getElementById('editText').value = content;
+                this.openModal('editModal');
+            },
+            
+            saveEdit() {
+                const newContent = document.getElementById('editText').value;
+                if (newContent && this.currentEditId) {
+                    this.updateMessage(this.currentEditId, newContent);
+                    
+                    if (this.currentConversationId) {
+                        const conversation = this.conversations.find(c => c.id === this.currentConversationId);
+                        const msg = conversation.messages.find(m => m.id === this.currentEditId);
+                        if (msg) {
+                            msg.content = newContent;
+                            msg.edited = true;
+                            this.saveConversations();
+                        }
+                    }
+                }
+                this.closeModal('editModal');
+            },
+            
+            regenerateMessage(msgId) {
+                if (!this.currentConversationId) return;
+                
+                const conversation = this.conversations.find(c => c.id === this.currentConversationId);
+                const msgIndex = conversation.messages.findIndex(m => m.id === msgId);
+                
+                if (msgIndex > 0 && conversation.messages[msgIndex - 1].role === 'user') {
+                    conversation.messages = conversation.messages.slice(0, msgIndex);
+                    this.saveConversations();
+                    
+                    this.loadConversation(this.currentConversationId);
+                    document.getElementById('messageInput').value = conversation.messages[msgIndex - 1].content;
+                    this.sendMessage();
+                }
+            },
+            
+            toggleReaction(msgId, emoji) {
+                if (!this.currentReactions[msgId]) {
+                    this.currentReactions[msgId] = [];
+                }
+                
+                const index = this.currentReactions[msgId].indexOf(emoji);
+                if (index >= 0) {
+                    this.currentReactions[msgId].splice(index, 1);
+                } else {
+                    this.currentReactions[msgId].push(emoji);
+                }
+                
+                const wrapper = document.getElementById(msgId);
+                if (wrapper) {
+                    const btns = wrapper.querySelectorAll('.reaction-btn');
+                    btns.forEach(btn => {
+                        if (this.currentReactions[msgId].includes(btn.textContent)) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+                }
+            },
+            
+            showTypingIndicator() {
+                this.removeTypingIndicator();
+                
+                const container = document.getElementById('messagesContainer');
+                const indicator = document.createElement('div');
+                indicator.className = 'message-wrapper bot';
+                indicator.id = 'typingIndicator';
+                
+                const msgContainer = document.createElement('div');
+                msgContainer.className = 'message-container';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar bot';
+                avatar.textContent = '🐼';
+                msgContainer.appendChild(avatar);
+                
+                const bubble = document.createElement('div');
+                bubble.className = 'typing-indicator';
+                bubble.innerHTML = `
+                    <span>🐼</span>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                `;
+                msgContainer.appendChild(bubble);
+                indicator.appendChild(msgContainer);
+                container.appendChild(indicator);
+                this.scrollToBottom();
+            },
+            
+            removeTypingIndicator() {
+                const indicator = document.getElementById('typingIndicator');
+                if (indicator) indicator.remove();
+            },
+            
+            copyChat() {
+                if (!this.currentConversationId) return;
+                
+                const conversation = this.conversations.find(c => c.id === this.currentConversationId);
+                if (!conversation) return;
+                
+                const text = conversation.messages.map(m => 
+                    `${m.role === 'user' ? 'You' : 'DODO Panda'}: ${m.content}`
+                ).join('\n\n');
+                
+                navigator.clipboard.writeText(text);
+                this.showToast('Chat copied to clipboard!');
+            },
+            
+            exportChat() {
+                this.exportConversation(this.currentConversationId);
+            },
+            
+            exportConversation(convId) {
+                const conversation = this.conversations.find(c => c.id === convId);
+                if (!conversation) return;
+                
+                const format = prompt('Export format (md/json/txt):', 'md');
+                if (!format) return;
+                
+                let content = '';
+                let mimeType = 'text/plain';
+                let extension = 'txt';
+                
+                if (format === 'json') {
+                    content = JSON.stringify(conversation, null, 2);
+                    mimeType = 'application/json';
+                    extension = 'json';
+                } else if (format === 'md') {
+                    content = `# ${conversation.title} 🐼\n\n`;
+                    conversation.messages.forEach(msg => {
+                        const role = msg.role === 'user' ? '**You**' : '**DODO Panda**';
+                        content += `\n## ${role}\n\n${msg.content}\n\n`;
+                        if (msg.timestamp) {
+                            content += `*${new Date(msg.timestamp).toLocaleString()}*\n\n`;
+                        }
+                    });
+                    extension = 'md';
+                } else {
+                    content = `${conversation.title} 🐼\n${'='.repeat(40)}\n\n`;
+                    conversation.messages.forEach(msg => {
+                        const role = msg.role === 'user' ? 'You:' : 'DODO Panda:';
+                        content += `\n${role}\n${msg.content}\n\n`;
+                    });
+                }
+                
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${conversation.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${extension}`;
+                a.click();
+                URL.revokeObjectURL(url);
+            },
+            
+            clearChat() {
+                if (!this.currentConversationId || !confirm('Are you sure you want to clear all messages?')) return;
+                
+                const conversation = this.conversations.find(c => c.id === this.currentConversationId);
+                if (conversation) {
+                    conversation.messages = [];
+                    this.saveConversations();
+                    this.loadConversation(this.currentConversationId);
+                }
+            },
+            
+            openSearch() {
+                document.getElementById('searchResults').innerHTML = '';
+                document.getElementById('searchInput').value = '';
+                this.openModal('searchModal');
+            },
+            
+            performSearch(query) {
+                const results = document.getElementById('searchResults');
+                results.innerHTML = '';
+                
+                if (query.length < 2) return;
+                
+                query = query.toLowerCase();
+                
+                this.conversations.forEach(conv => {
+                    conv.messages.forEach(msg => {
+                        if (msg.content.toLowerCase().includes(query)) {
+                            const preview = msg.content.substring(0, 100).replace(/\n/g, ' ');
+                            const item = document.createElement('div');
+                            item.className = 'model-item';
+                            item.textContent = `${conv.title.substring(0, 30)} - ${preview}...`;
+                            item.onclick = () => {
+                                this.loadConversation(conv.id);
+                                this.closeModal('searchModal');
+                            };
+                            results.appendChild(item);
+                        }
+                    });
+                });
+            },
+            
+            openSettings() {
+                document.getElementById('settingsTheme').value = this.settings.theme;
+                document.getElementById('settingsFontSize').value = this.settings.fontSize;
+                document.getElementById('settingsAutoSave').checked = this.settings.autoSave;
+                document.getElementById('settingsTemp').value = this.settings.temperature;
+                document.getElementById('tempValue').textContent = this.settings.temperature;
+                document.getElementById('settingsContextLength').value = this.settings.contextLength;
+                document.getElementById('settingsStorageMode').value = this.settings.storageMode;
+                document.getElementById('settingsRetryAttempts').value = this.settings.retryAttempts;
+                document.getElementById('settingsRetryDelay').value = this.settings.retryDelay;
+                
+                this.refreshModels();
+                this.updateStorageUsage();
+                this.openModal('settingsModal');
+            },
+            
+            switchSettingsTab(tab) {
+                document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+                
+                document.querySelector(`[onclick="app.switchSettingsTab('${tab}')"]`).classList.add('active');
+                document.getElementById(tab + 'Settings').classList.add('active');
+            },
+            
+            async refreshModels() {
+                const modelList = document.getElementById('modelList');
+                modelList.innerHTML = '<div class="model-item">Loading models...</div>';
+                
+                try {
+                    const response = await fetch('http://localhost:11434/api/tags');
+                    const data = await response.json();
+                    
+                    this.availableModels = data.models?.map(m => m.name) || [];
+                    
+                    modelList.innerHTML = '';
+                    
+                    if (this.availableModels.length > 0) {
+                        this.availableModels.forEach(model => {
+                            const item = document.createElement('div');
+                            item.className = 'model-item' + (model === this.settings.model ? ' selected' : '');
+                            item.textContent = model;
+                            item.onclick = () => {
+                                document.querySelectorAll('.model-item').forEach(i => i.classList.remove('selected'));
+                                item.classList.add('selected');
+                                this.settings.model = model;
+                                document.getElementById('currentModel').textContent = model + ' ▼';
+                                const select = document.getElementById('sidebarModelSelect');
+                                if (select) select.value = model;
+                            };
+                            modelList.appendChild(item);
+                        });
+                        
+                        const separator = document.createElement('div');
+                        separator.className = 'context-menu-separator';
+                        modelList.appendChild(separator);
+                        
+                        const pullItem = document.createElement('div');
+                        pullItem.className = 'model-item';
+                        pullItem.textContent = '➕ Pull new model...';
+                        pullItem.onclick = () => {
+                            this.closeModal('settingsModal');
+                            this.openPullModal();
+                        };
+                        modelList.appendChild(pullItem);
+                        
+                        document.getElementById('modelInfo').textContent = `✓ ${this.availableModels.length} models available`;
+                        document.getElementById('status').textContent = `● Online (${this.availableModels.length} models) 🐼`;
+                        document.getElementById('status').className = 'status online';
+                        
+                        const select = document.getElementById('sidebarModelSelect');
+                        select.innerHTML = '';
+                        this.availableModels.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model;
+                            option.textContent = model;
+                            if (model === this.settings.model) option.selected = true;
+                            select.appendChild(option);
+                        });
+                        
+                    } else {
+                        modelList.innerHTML = '<div class="model-item">No models found</div>';
+                        document.getElementById('modelInfo').textContent = 'No models found. Pull one using the option above.';
+                        document.getElementById('status').textContent = '⚠ No models';
+                        document.getElementById('status').className = 'status warning';
+                    }
+                    
+                } catch (error) {
+                    console.error('Failed to fetch models:', error);
+                    
+                    if (this.availableModels.length > 0) {
+                        modelList.innerHTML = '';
+                        this.availableModels.forEach(model => {
+                            const item = document.createElement('div');
+                            item.className = 'model-item' + (model === this.settings.model ? ' selected' : '');
+                            item.textContent = model;
+                            item.onclick = () => {
+                                document.querySelectorAll('.model-item').forEach(i => i.classList.remove('selected'));
+                                item.classList.add('selected');
+                                this.settings.model = model;
+                                document.getElementById('currentModel').textContent = model + ' ▼';
+                                const select = document.getElementById('sidebarModelSelect');
+                                if (select) select.value = model;
+                            };
+                            modelList.appendChild(item);
+                        });
+                        
+                        document.getElementById('modelInfo').textContent = 'Using cached models (Ollama offline)';
+                        document.getElementById('status').textContent = `● Offline (${this.availableModels.length} cached) 🐼`;
+                        document.getElementById('status').className = 'status warning';
+                    } else {
+                        const defaultModels = ['llama3.2', 'codellama', 'phi3', 'mistral', 'neural-chat'];
+                        modelList.innerHTML = '';
+                        defaultModels.forEach(model => {
+                            const item = document.createElement('div');
+                            item.className = 'model-item';
+                            item.textContent = model;
+                            item.onclick = () => {
+                                document.querySelectorAll('.model-item').forEach(i => i.classList.remove('selected'));
+                                item.classList.add('selected');
+                                this.settings.model = model;
+                                document.getElementById('currentModel').textContent = model + ' ▼';
+                                const select = document.getElementById('sidebarModelSelect');
+                                if (select) select.value = model;
+                            };
+                            modelList.appendChild(item);
+                        });
+                        
+                        document.getElementById('modelInfo').textContent = 'Cannot connect to Ollama. Make sure it\'s running.';
+                        document.getElementById('status').textContent = '● Offline';
+                        document.getElementById('status').className = 'status offline';
+                    }
+                }
+            },
+            
+            openPullModal() {
+                document.getElementById('pullModelName').value = '';
+                this.openModal('pullModal');
+            },
+            
+            pullModel() {
+                const modelName = document.getElementById('pullModelName').value.trim();
+                if (!modelName) return;
+                
+                alert(`To pull ${modelName}, run this command in your terminal:\n\nollama pull ${modelName}`);
+                
+                this.closeModal('pullModal');
+                this.openSettings();
+                
+                setTimeout(() => this.refreshModels(), 5000);
+            },
+            
+            saveSettings() {
+                const oldStorageMode = this.settings.storageMode;
+                const newStorageMode = document.getElementById('settingsStorageMode').value;
+                
+                this.settings.theme = document.getElementById('settingsTheme').value;
+                this.settings.fontSize = parseInt(document.getElementById('settingsFontSize').value);
+                this.settings.autoSave = document.getElementById('settingsAutoSave').checked;
+                this.settings.temperature = parseFloat(document.getElementById('settingsTemp').value);
+                this.settings.contextLength = parseInt(document.getElementById('settingsContextLength').value);
+                this.settings.retryAttempts = parseInt(document.getElementById('settingsRetryAttempts').value);
+                this.settings.retryDelay = parseInt(document.getElementById('settingsRetryDelay').value);
+                
+                const selectedModel = document.querySelector('.model-item.selected');
+                if (selectedModel) {
+                    this.settings.model = selectedModel.textContent;
+                }
+                
+                // Handle storage mode change if needed
+                if (oldStorageMode !== newStorageMode) {
+                    this.setStorageMode(newStorageMode);
+                }
+                
+                this.changeTheme(this.settings.theme);
+                document.getElementById('currentModel').textContent = this.settings.model + ' ▼';
+                const select = document.getElementById('sidebarModelSelect');
+                if (select) select.value = this.settings.model;
+                
+                this.saveSettings();
+                this.closeModal('settingsModal');
+                this.showToast('Settings saved!');
+            },
+            
+            showHelp() {
+                const helpContent = `
+DODO Panda Assistant v${this.version}
+
+🐼 PRIVATE SESSION
+• Each tab has its own private conversation history
+• No messages are shared between different users/tabs
+• Data is stored only in your browser
+• Choose between session storage (clears on tab close) or persistent storage (saved forever)
+• Export to keep conversations permanently
+
+✨ NEW FEATURES
+• 💾 Persistent storage option - Your conversations now stay saved!
+• 🔄 Quick model switching from sidebar - Change models instantly
+• 🔁 Automatic retry for failed requests - Handles connection issues
+• 📊 Storage usage monitor - See how much space you're using
+
+✨ FEATURES
+• Smart Scrolling - Scroll bar stays stable while generating
+• Multi-Model Support - Works with any Ollama model
+• Model Caching - Remembers models when Ollama is offline
+• Pull Models - Instructions to pull new models
+• Context Length Control - Adjust memory for conversations
+• Markdown Support - Formatting for better responses including tables
+• Code Blocks - Syntax highlighting for code
+• Message Reactions - React with 👍 👎 ❤️
+• Edit Messages - Fix or improve your messages
+• Regenerate Responses - Get alternative answers
+• Search Conversations - Find messages across chats
+• Pin Important Chats - Keep favorites at the top
+• Export Conversations - Save as MD/JSON/TXT
+• Export/Import Session - Save/load all conversations
+• Stop Generation - Actually stops the AI from responding
+
+💾 DATA LOCATION
+• Conversations: Your choice of sessionStorage (temporary) or localStorage (persistent)
+• Settings: localStorage (persists between sessions)
+• No cloud services - your conversations stay private!
+
+🐼 The panda says: Try the new persistent storage - your conversations will stay saved!
+                `;
+                
+                document.getElementById('helpContent').textContent = helpContent;
+                this.openModal('helpModal');
+            },
+            
+            async checkOllama() {
+                try {
+                    const response = await fetch('http://localhost:11434/api/tags');
+                    const data = await response.json();
+                    
+                    const models = data.models?.map(m => m.name) || [];
+                    this.availableModels = models;
+                    
+                    const status = document.getElementById('status');
+                    if (models.length > 0) {
+                        status.textContent = `● Online (${models.length} models) 🐼`;
+                        status.className = 'status online';
+                        
+                        const select = document.getElementById('sidebarModelSelect');
+                        select.innerHTML = '';
+                        models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model;
+                            option.textContent = model;
+                            if (model === this.settings.model) option.selected = true;
+                            select.appendChild(option);
+                        });
+                    } else {
+                        status.textContent = '⚠ Online (no models) 🐼';
+                        status.className = 'status warning';
+                    }
+                    
+                } catch (error) {
+                    const status = document.getElementById('status');
+                    if (this.availableModels.length > 0) {
+                        status.textContent = `● Offline (${this.availableModels.length} cached) 🐼`;
+                        status.className = 'status warning';
+                    } else {
+                        status.textContent = '● Offline';
+                        status.className = 'status offline';
+                    }
+                }
+            },
+            
+            handleKeydown(e) {
+                if (this.currentView !== 'chat') return;
+                
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                } else if (e.key === 'Enter' && e.shiftKey) {
+                    // Allow new line
+                }
+            },
+            
+            scrollToBottom() {
+                if (!this.autoScrollEnabled || this.userScrolled) return;
+                
+                const chatArea = document.getElementById('chatArea');
+                setTimeout(() => {
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                }, 10);
+            },
+            
+            openModal(id) {
+                document.getElementById(id).classList.add('active');
+            },
+            
+            closeModal(id) {
+                document.getElementById(id).classList.remove('active');
+            },
+            
+            showToast(message, duration = 2000) {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background-color: var(--surface);
+                    color: var(--text-primary);
+                    padding: 10px 20px;
+                    border-radius: 20px;
+                    border: 1px solid var(--border);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    z-index: 10000;
+                    font-size: 13px;
+                    animation: slideUp 0.3s ease-out;
+                    max-width: 300px;
+                    text-align: center;
+                `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.animation = 'fadeOut 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+        };
+        
+        // Initialize app
+        app.init();
+    </script>
+</body>
+</html>
